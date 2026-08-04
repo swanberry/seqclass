@@ -9,7 +9,9 @@ generate_model(
   class,
   positive = "T",
   ctrl = MLSeq::voomControl(method = "repeatedcv", number = 5, repeats = 2, tuneLength =
-    7)
+    7),
+  train_test_split = FALSE,
+  negative = "F"
 )
 }
 \arguments{
@@ -17,12 +19,20 @@ generate_model(
 
 \item{class}{A binary vector of strings containing the condition factor}
 
-\item{positive}{The string meaning positive for the class; default "T"}
+\item{positive}{The string meaning positive for the class; default "T". Note this cannot be "TRUE".}
 
 \item{ctrl}{A control function to modify the model; by default repeatedcv, 2 repeats x 5, tune Length 7}
+
+\item{train_test_split}{Determine whether or not to split (70:30) into train and test data}
+
+\item{negative}{Required if train_test_split is true-- the string meaning negative for the class; default "F"}
 }
 \value{
-An MLSeq model that can be passed into use_model
+An MLSeq model that can be passed into use_model. If train-test-split is true, then this outputs a named list with components:
+
+\item{model}{The trained model}
+
+\item{confusion_matrix}{The confusion matrix from the tts}
 }
 \description{
 Generate a voomNSC model using MLSeq
