@@ -12,3 +12,5 @@ Imports:
     DESeq2,
     MLSeq,
     S4Vectors
+URL: https://github.com/qryce-01/seqclass
+BugReports: https://github.com/qryce-01/seqclass/issues
