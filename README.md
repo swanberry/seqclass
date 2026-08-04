@@ -9,3 +9,18 @@ you can install the development version of `seqclass` from GitHub:
 ```r
 # install.packages("remotes")
 remotes::install_github("qryce-01/seqclass")
+
+## usage
+
+```r
+library(seqclass)
+
+# train a voomNSC model using your count matrix and class labels
+model <- generate_model(
+  data = my_counts, 
+  class = my_classes
+)
+
+# predict on new, similar data
+predictions <- use_model(my_new_counts, model)
+print(predictions)
