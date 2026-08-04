@@ -9,6 +9,7 @@ you can install the development version of `seqclass` from GitHub:
 ```r
 # install.packages("remotes")
 remotes::install_github("qryce-01/seqclass")
+```
 
 ## usage
 
@@ -24,3 +25,4 @@ model <- generate_model(
 # predict on new, similar data
 predictions <- use_model(my_new_counts, model)
 print(predictions)
+```
