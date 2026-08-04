@@ -8,4 +8,4 @@ you can install the development version of `seqclass` from GitHub:
 
 ```r
 # install.packages("remotes")
-remotes::install_github("your-username/seqclass")
+remotes::install_github("qryce-01/seqclass")
