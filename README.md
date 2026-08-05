@@ -19,10 +19,15 @@ library(seqclass)
 # train a voomNSC model using your count matrix and class labels
 model <- generate_model(
   data = my_counts, 
-  class = my_classes
+  class = my_classes,
+  train_test_split = TRUE
 )
 
 # predict on new, similar data
-predictions <- use_model(my_new_counts, model)
+predictions <- use_model(my_new_counts, model$model)
 print(predictions)
+
+# view the confusion matrix for tts
+model$confusion_matrix
+
 ```
