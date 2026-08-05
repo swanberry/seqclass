@@ -8,10 +8,15 @@ generate_model(
   data,
   class,
   positive = "T",
-  ctrl = MLSeq::voomControl(method = "repeatedcv", number = 5, repeats = 2, tuneLength =
-    7),
+  use_svmRadial = FALSE,
+  voom_ctrl = MLSeq::voomControl(method = "repeatedcv", number = 5, repeats = 2,
+    tuneLength = 7),
+  svm_ctrl = caret::trainControl(method = "repeatedcv", number = 2, repeats = 2,
+    classProbs = TRUE),
   train_test_split = FALSE,
-  negative = "F"
+  negative = "F",
+  normalize = "deseq",
+  preProcessing = "deseq-vst"
 )
 }
 \arguments{
@@ -19,13 +24,21 @@ generate_model(
 
 \item{class}{A binary vector of strings containing the condition factor}
 
-\item{positive}{The string meaning positive for the class; default "T". Note this cannot be "TRUE".}
+\item{positive}{The string meaning positive for the class. Note this cannot be "TRUE".}
 
-\item{ctrl}{A control function to modify the model; by default repeatedcv, 2 repeats x 5, tune Length 7}
+\item{use_svmRadial}{Determines whether or not an svmRadial model is used instead of voomNSC}
+
+\item{voom_ctrl}{A control function to modify the model for voomNSC models}
+
+\item{svm_ctrl}{A control function to modify the model for SVM models (use only if use_svmRadial is TRUE)}
 
 \item{train_test_split}{Determine whether or not to split (70:30) into train and test data}
 
 \item{negative}{Required if train_test_split is true-- the string meaning negative for the class; default "F"}
+
+\item{normalize}{For voom-based clasifiers. Character string indicating type of normalization-- 'deseq', 'tmm', or 'none'}
+
+\item{preProcessing}{For caret-based classifiers. Name of preprocessing method-- eg "deseq-vst", "deseq-rlog", "logcpm"}
 }
 \value{
 An MLSeq model that can be passed into use_model. If train-test-split is true, then this outputs a named list with components:
