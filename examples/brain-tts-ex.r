@@ -1,6 +1,6 @@
 #* INFO Show use of Train-Test-Split for the same brain dataset as brain-cross-predict-ex.r
 # install.packages("remotes")
-# remotes::install_github("qryce-01/seqclass")
+# remotes::install_github("swanberry/seqclass")
 library(seqclass)
 library(data.table)
 library(dplyr)

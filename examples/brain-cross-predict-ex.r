@@ -2,7 +2,7 @@
 #! WARNING the model may take ~2-5mins to generate
 
 # install.packages("remotes")
-# remotes::install_github("qryce-01/seqclass")
+# remotes::install_github("swanberry/seqclass")
 library(seqclass)
 library(data.table)
 library(dplyr)
