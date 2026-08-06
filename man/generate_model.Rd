@@ -9,6 +9,7 @@ generate_model(
   class,
   features = "all",
   positive = "T",
+  add_one = FALSE,
   use_svmRadial = FALSE,
   voom_ctrl = MLSeq::voomControl(method = "repeatedcv", number = 3, repeats = 2,
     tuneLength = 7),
@@ -28,6 +29,8 @@ generate_model(
 \item{features}{Integer indicating how many of the best features to use-- also accepts arguments "all" and "tenthOfN"}
 
 \item{positive}{The string meaning positive for the class. Note this cannot be "TRUE".}
+
+\item{add_one}{Boolean: Adds one to the data to avoid the too many zeroes error; helpful if using not many features.}
 
 \item{use_svmRadial}{Determines whether or not an svmRadial model is used instead of voomNSC}
 
