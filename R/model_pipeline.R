@@ -77,6 +77,7 @@ generate_model <- function(
       class = class_tr,
       features = features,
       positive = positive,
+      add_one = add_one,
       use_svmRadial = use_svmRadial,
       voom_ctrl = voom_ctrl,
       svm_ctrl = svm_ctrl,
