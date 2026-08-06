@@ -3,13 +3,19 @@
 #' @param data A data frame or count matrix (Features as rows, samples as columns)
 #' @param model A model generated from generate_model
 #' @param features The features output from generate_model (ls$features)
+#' @param add_one Boolean: Adds one to the data to avoid too many zeroes error; helpful if low feature count
 #' @return A factor of predictions
 #' @export
-use_model <- function(data, model, features = "all") {
+use_model <- function(data, model, features = "all", add_one = FALSE) {
   if (!identical(features, "all")) {
     data <- data[features, ]
   }
-  matrix <- as.matrix(data)
+  if (add_one) {
+    matrix <- as.matrix(data + 1)
+  } else {
+    matrix <- as.matrix(data)
+  }
+
   rownames(matrix) <- rownames(data)
   data <- matrix
   dummy <- S4Vectors::DataFrame(colnames(data))
@@ -88,7 +94,8 @@ generate_model <- function(
     predictions <- use_model(
       data = data_ts,
       model = model$model,
-      features = model$features
+      features = model$features,
+      add_one = add_one
     )
     class_ts <- factor(class_ts, levels = c(negative, positive))
     confusion_matrix <- caret::confusionMatrix(
