@@ -26,6 +26,7 @@ use_model <- function(data, model, features = "all") {
 #' @param data A data frame or count matrix (Features as rows, samples as columns)
 #' @param class A binary vector of strings containing the condition factor
 #' @param features Integer indicating how many of the best features to use-- also accepts arguments "all" and "tenthOfN"
+#' @param add_one Boolean: Adds one to the data to avoid the too many zeroes error; helpful if using not many features.
 #' @param positive The string meaning positive for the class. Note this cannot be "TRUE".
 #' @param use_svmRadial Determines whether or not an svmRadial model is used instead of voomNSC
 #' @param voom_ctrl A control function to modify the model for voomNSC models
@@ -44,6 +45,7 @@ generate_model <- function(
   class,
   features = "all",
   positive = "T",
+  add_one = FALSE,
   use_svmRadial = FALSE,
   voom_ctrl = MLSeq::voomControl(
     method = "repeatedcv",
@@ -104,7 +106,11 @@ generate_model <- function(
     condition = factor(class)
   )
 
-  data <- as.matrix(data)
+  if (add_one) {
+    data <- as.matrix(data + 1)
+  } else {
+    data <- as.matrix(data)
+  }
 
   print("Converting to DESeq2 DS-- this may take a while")
   print("If this takes a very long time, try passing an argument into features")
