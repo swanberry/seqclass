@@ -4,12 +4,14 @@
 \alias{use_model}
 \title{Use an existing model}
 \usage{
-use_model(data, model)
+use_model(data, model, features = "all")
 }
 \arguments{
 \item{data}{A data frame or count matrix (Features as rows, samples as columns)}
 
 \item{model}{A model generated from generate_model}
+
+\item{features}{The features output from generate_model (ls$features)}
 }
 \value{
 A factor of predictions

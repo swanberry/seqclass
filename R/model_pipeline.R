@@ -2,9 +2,13 @@
 #'
 #' @param data A data frame or count matrix (Features as rows, samples as columns)
 #' @param model A model generated from generate_model
+#' @param features The features output from generate_model (ls$features)
 #' @return A factor of predictions
 #' @export
-use_model <- function(data, model) {
+use_model <- function(data, model, features = "all") {
+  if (!identical(features, "all")) {
+    data <- data[features, ]
+  }
   matrix <- as.matrix(data)
   rownames(matrix) <- rownames(data)
   data <- matrix
@@ -17,30 +21,33 @@ use_model <- function(data, model) {
   return(MLSeq::predict(model, data.S4))
 }
 
-#' Generate a voomNSC model using MLSeq
+#' Generate a model using MLSeq
 #'
 #' @param data A data frame or count matrix (Features as rows, samples as columns)
 #' @param class A binary vector of strings containing the condition factor
+#' @param features Integer indicating how many of the best features to use-- also accepts arguments "all" and "tenthOfN"
 #' @param positive The string meaning positive for the class. Note this cannot be "TRUE".
 #' @param use_svmRadial Determines whether or not an svmRadial model is used instead of voomNSC
 #' @param voom_ctrl A control function to modify the model for voomNSC models
 #' @param svm_ctrl A control function to modify the model for SVM models (use only if use_svmRadial is TRUE)
-#' @param train_test_split Determine whether or not to split (70:30) into train and test data
+#' @param train_test_split Determine whether or not to split (70:30) into train and test data (tts)
 #' @param normalize For voom-based clasifiers. Character string indicating type of normalization-- 'deseq', 'tmm', or 'none'
 #' @param negative Required if train_test_split is true-- the string meaning negative for the class; default "F"
 #' @param preProcessing For caret-based classifiers. Name of preprocessing method-- eg "deseq-vst", "deseq-rlog", "logcpm"
-#' @return An MLSeq model that can be passed into use_model. If train-test-split is true, then this outputs a named list with components:
+#' @return An MLSeq model that can be passed into use_model. Returns a named list with components:
 #' @return \item{model}{The trained model}
-#' @return \item{confusion_matrix}{The confusion matrix from the tts}
+#' @return \item{features}{The features selected-- make sure to pass this into use_model if you selected features}
+#' @return \item{confusion_matrix}{The confusion matrix from the tts-- only outputted if tts is TRUE}
 #' @export
 generate_model <- function(
   data,
   class,
+  features = "all",
   positive = "T",
   use_svmRadial = FALSE,
   voom_ctrl = MLSeq::voomControl(
     method = "repeatedcv",
-    number = 5,
+    number = 3,
     repeats = 2,
     tuneLength = 7
   ),
@@ -66,6 +73,7 @@ generate_model <- function(
     model <- generate_model(
       data = data_tr,
       class = class_tr,
+      features = features,
       positive = positive,
       use_svmRadial = use_svmRadial,
       voom_ctrl = voom_ctrl,
@@ -74,28 +82,50 @@ generate_model <- function(
       normalize = normalize,
       preProcessing = preProcessing
     )
-    predictions <- use_model(data = data_ts, model = model)
+    predictions <- use_model(
+      data = data_ts,
+      model = model$model,
+      features = model$features
+    )
     class_ts <- factor(class_ts, levels = c(negative, positive))
     confusion_matrix <- caret::confusionMatrix(
       data = predictions,
       reference = class_ts,
       positive = positive
     )
-    return(list("model" = model, "confusion_matrix" = confusion_matrix))
+    return(list(
+      "model" = model,
+      "features" = features,
+      "confusion_matrix" = confusion_matrix
+    ))
   }
 
   class <- S4Vectors::DataFrame(
     condition = factor(class)
   )
 
-  data <- as.matrix(data + 1)
+  data <- as.matrix(data)
 
+  print("Converting to DESeq2 DS-- this may take a while")
+  print("If this takes a very long time, try passing an argument into features")
   # convert to DESeq2 datasets
   data.S4 <- DESeq2::DESeqDataSetFromMatrix(
     countData = data,
     colData = class,
     design = ~condition
   )
+
+  # handle feature use
+  if (features != "all") {
+    if (features == "tenthOfN") {
+      features <- ceiling(ncol(data) * 0.1)
+    }
+    dds <- DESeq2::DESeq(data.S4)
+    res <- DESeq2::results(dds)
+    sres <- res[order(res$padj), ]
+    features <- rownames(sres[1:features, ])
+    data.S4 <- data.S4[features]
+  }
 
   if (use_svmRadial) {
     model <- MLSeq::classify(
@@ -114,6 +144,5 @@ generate_model <- function(
       normalize = normalize
     )
   }
-
-  return(model)
+  return(list("model" = model, "features" = features))
 }

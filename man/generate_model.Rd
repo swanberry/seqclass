@@ -2,14 +2,15 @@
 % Please edit documentation in R/model_pipeline.R
 \name{generate_model}
 \alias{generate_model}
-\title{Generate a voomNSC model using MLSeq}
+\title{Generate a model using MLSeq}
 \usage{
 generate_model(
   data,
   class,
+  features = "all",
   positive = "T",
   use_svmRadial = FALSE,
-  voom_ctrl = MLSeq::voomControl(method = "repeatedcv", number = 5, repeats = 2,
+  voom_ctrl = MLSeq::voomControl(method = "repeatedcv", number = 3, repeats = 2,
     tuneLength = 7),
   svm_ctrl = caret::trainControl(method = "repeatedcv", number = 2, repeats = 2,
     classProbs = TRUE),
@@ -24,6 +25,8 @@ generate_model(
 
 \item{class}{A binary vector of strings containing the condition factor}
 
+\item{features}{Integer indicating how many of the best features to use-- also accepts arguments "all" and "tenthOfN"}
+
 \item{positive}{The string meaning positive for the class. Note this cannot be "TRUE".}
 
 \item{use_svmRadial}{Determines whether or not an svmRadial model is used instead of voomNSC}
@@ -32,7 +35,7 @@ generate_model(
 
 \item{svm_ctrl}{A control function to modify the model for SVM models (use only if use_svmRadial is TRUE)}
 
-\item{train_test_split}{Determine whether or not to split (70:30) into train and test data}
+\item{train_test_split}{Determine whether or not to split (70:30) into train and test data (tts)}
 
 \item{negative}{Required if train_test_split is true-- the string meaning negative for the class; default "F"}
 
@@ -41,12 +44,14 @@ generate_model(
 \item{preProcessing}{For caret-based classifiers. Name of preprocessing method-- eg "deseq-vst", "deseq-rlog", "logcpm"}
 }
 \value{
-An MLSeq model that can be passed into use_model. If train-test-split is true, then this outputs a named list with components:
+An MLSeq model that can be passed into use_model. Returns a named list with components:
 
 \item{model}{The trained model}
 
-\item{confusion_matrix}{The confusion matrix from the tts}
+\item{features}{The features selected-- make sure to pass this into use_model if you selected features}
+
+\item{confusion_matrix}{The confusion matrix from the tts-- only outputted if tts is TRUE}
 }
 \description{
-Generate a voomNSC model using MLSeq
+Generate a model using MLSeq
 }

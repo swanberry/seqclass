@@ -16,7 +16,11 @@ if (!file.exists("GSE205450_counts.table.txt.gz")) {
   print("File downloaded")
 }
 
-data <- as.data.frame(fread("GSE205450_counts.table.txt.gz"))[-1]
+data <- as.data.frame(fread("GSE205450_counts.table.txt.gz")) |>
+  filter(!is.na(Gene_symbol))
+genes <- data[[1]]
+data <- data[-1]
+rownames(data) <- genes
 
 vec <- grepl(".*PD.*", colnames(data))
 class <- c("F", "T")[vec + 1]
