@@ -16,6 +16,7 @@ generate_model(
   svm_ctrl = caret::trainControl(method = "repeatedcv", number = 2, repeats = 2,
     classProbs = TRUE),
   train_test_split = FALSE,
+  roc_curve_samples = 1000,
   negative = "F",
   normalize = "deseq",
   preProcessing = "deseq-vst"
@@ -32,13 +33,15 @@ generate_model(
 
 \item{add_one}{Boolean: Adds one to the data to avoid the too many zeroes error; helpful if using not many features.}
 
-\item{use_svmRadial}{Determines whether or not an svmRadial model is used instead of voomNSC}
+\item{use_svmRadial}{Determines whether or not an svmRadial model is used instead of voomNSC (needed for roc dataframe)}
 
 \item{voom_ctrl}{A control function to modify the model for voomNSC models}
 
 \item{svm_ctrl}{A control function to modify the model for SVM models (use only if use_svmRadial is TRUE)}
 
 \item{train_test_split}{Determine whether or not to split (70:30) into train and test data (tts)}
+
+\item{roc_curve_samples}{For tts-- how many thresholds to test (default 1000) for the ROC df}
 
 \item{negative}{Required if train_test_split is true-- the string meaning negative for the class; default "F"}
 
@@ -54,6 +57,8 @@ An MLSeq model that can be passed into use_model. Returns a named list with comp
 \item{features}{The features selected-- make sure to pass this into use_model if you selected features}
 
 \item{confusion_matrix}{The confusion matrix from the tts-- only outputted if tts is TRUE}
+
+\item{roc_df}{A dataframe from which an roc curve can be easily plotted-- only outputted if using an SVM model}
 }
 \description{
 Generate a model using MLSeq

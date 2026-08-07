@@ -4,7 +4,7 @@
 \alias{use_model}
 \title{Use an existing model}
 \usage{
-use_model(data, model, features = "all", add_one = FALSE)
+use_model(data, model, features = "all", add_one = FALSE, yield_probs = FALSE)
 }
 \arguments{
 \item{data}{A data frame or count matrix (Features as rows, samples as columns)}
@@ -14,6 +14,8 @@ use_model(data, model, features = "all", add_one = FALSE)
 \item{features}{The features output from generate_model (ls$features)}
 
 \item{add_one}{Boolean: Adds one to the data to avoid too many zeroes error; helpful if low feature count}
+
+\item{yield_probs}{(Only for svmModels) show probabilities of "TRUE" instead of binary classifications}
 }
 \value{
 A factor of predictions

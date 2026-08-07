@@ -3,10 +3,17 @@
 #' @param data A data frame or count matrix (Features as rows, samples as columns)
 #' @param model A model generated from generate_model
 #' @param features The features output from generate_model (ls$features)
+#' @param yield_probs (Only for svmModels) show probabilities of "TRUE" instead of binary classifications
 #' @param add_one Boolean: Adds one to the data to avoid too many zeroes error; helpful if low feature count
 #' @return A factor of predictions
 #' @export
-use_model <- function(data, model, features = "all", add_one = FALSE) {
+use_model <- function(
+  data,
+  model,
+  features = "all",
+  add_one = FALSE,
+  yield_probs = FALSE
+) {
   if (!identical(features, "all")) {
     data <- data[features, ]
   }
@@ -24,6 +31,10 @@ use_model <- function(data, model, features = "all", add_one = FALSE) {
     colData = dummy,
     design = ~1
   )
+
+  if (yield_probs) {
+    return(MLSeq::predict(model, data.S4, type = "prob"))
+  }
   return(MLSeq::predict(model, data.S4))
 }
 
@@ -34,10 +45,11 @@ use_model <- function(data, model, features = "all", add_one = FALSE) {
 #' @param features Integer indicating how many of the best features to use-- also accepts arguments "all" and "tenthOfN"
 #' @param add_one Boolean: Adds one to the data to avoid the too many zeroes error; helpful if using not many features.
 #' @param positive The string meaning positive for the class. Note this cannot be "TRUE".
-#' @param use_svmRadial Determines whether or not an svmRadial model is used instead of voomNSC
+#' @param use_svmRadial Determines whether or not an svmRadial model is used instead of voomNSC (needed for roc dataframe)
 #' @param voom_ctrl A control function to modify the model for voomNSC models
 #' @param svm_ctrl A control function to modify the model for SVM models (use only if use_svmRadial is TRUE)
 #' @param train_test_split Determine whether or not to split (70:30) into train and test data (tts)
+#' @param roc_curve_samples For tts-- how many thresholds to test (default 1000) for the ROC df
 #' @param normalize For voom-based clasifiers. Character string indicating type of normalization-- 'deseq', 'tmm', or 'none'
 #' @param negative Required if train_test_split is true-- the string meaning negative for the class; default "F"
 #' @param preProcessing For caret-based classifiers. Name of preprocessing method-- eg "deseq-vst", "deseq-rlog", "logcpm"
@@ -45,6 +57,7 @@ use_model <- function(data, model, features = "all", add_one = FALSE) {
 #' @return \item{model}{The trained model}
 #' @return \item{features}{The features selected-- make sure to pass this into use_model if you selected features}
 #' @return \item{confusion_matrix}{The confusion matrix from the tts-- only outputted if tts is TRUE}
+#' @return \item{roc_df}{A dataframe from which an roc curve can be easily plotted-- only outputted if using an SVM model}
 #' @export
 generate_model <- function(
   data,
@@ -66,6 +79,7 @@ generate_model <- function(
     classProbs = TRUE
   ),
   train_test_split = FALSE,
+  roc_curve_samples = 1000,
   negative = "F",
   normalize = "deseq",
   preProcessing = "deseq-vst"
@@ -91,11 +105,14 @@ generate_model <- function(
       normalize = normalize,
       preProcessing = preProcessing
     )
-    predictions <- use_model(
+
+    # separate probs and predictions logic
+    predictions <- probs <- use_model(
       data = data_ts,
       model = model$model,
       features = model$features,
-      add_one = add_one
+      add_one = add_one,
+      yield_probs = FALSE
     )
     class_ts <- factor(class_ts, levels = c(negative, positive))
     confusion_matrix <- caret::confusionMatrix(
@@ -103,6 +120,60 @@ generate_model <- function(
       reference = class_ts,
       positive = positive
     )
+
+    # probs only makes sense if we use svmRadial
+    if (use_svmRadial) {
+      df <- data.frame(
+        true_pos_rate = numeric(),
+        false_pos_rate = numeric(),
+        threshold = numeric()
+      )
+      class <- as.character(class_ts)
+      positives <- length(class[class == positive])
+      negatives <- length(class[class == negative])
+      probs <- use_model(
+        data = data_ts,
+        model = model$model,
+        features = model$features,
+        add_one = add_one,
+        yield_probs = TRUE
+      )[, positive] # so is just a list of probabilities
+
+      for (i in 1:roc_curve_samples) {
+        tpc <- 0
+        fpc <- 0
+
+        threshold <- i / roc_curve_samples
+        boolvec <- ifelse(probs >= threshold, positive, negative)
+        for (j in seq_along(boolvec)) {
+          prediction <- boolvec[j]
+          actual <- class[j]
+          if (prediction == positive && actual == positive) {
+            # if prediction is true and actual is true (true positive)
+            tpc <- tpc + 1
+          }
+          if (prediction == positive && actual == negative) {
+            # if prediction is true and actual is false (false positive)
+            fpc <- fpc + 1
+          }
+        }
+        tpr <- tpc / positives
+        fpr <- fpc / negatives
+        new_row <- data.frame(
+          true_pos_rate = tpr,
+          false_pos_rate = fpr,
+          threshold = threshold
+        )
+        df <- rbind(df, new_row)
+      }
+
+      return(list(
+        "model" = model,
+        "features" = features,
+        "confusion_matrix" = confusion_matrix,
+        "roc_df" = df
+      ))
+    }
     return(list(
       "model" = model,
       "features" = features,
